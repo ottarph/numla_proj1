@@ -6,12 +6,12 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import matplotlib
 
-n = 30
+n = 40
 h = 1 / (n+1)
 
 
 f = lambda x, y: 0*x + 1
-f = lambda x, y: 10*x + 1
+#f = lambda x, y: 10*x + 1
 
 x_line = np.linspace(0, 1, n+2)[1:-1]
 y_line = np.linspace(0, 1, n+2)[1:-1]
@@ -50,7 +50,17 @@ def build_L(n):
 L = build_L(n)
 b = h**2 * f(x,y)
 
-u = npl.solve(-L, -b)
+from sparseitermethods import *
+L_s = build_L_sparse(n)
+u_0 = np.ones_like(x)
+u_0 = np.zeros_like(x)
+
+w = 1.5
+u, i, r = succesive_over_relaxation_sparse(L_s, b, u_0, w)
+#u, i, r = f_gauss_seidel_sparse_fp(L_s, b, u_0)
+#u, i, r = jacobi_fp_sparse(L_s, b, u_0)
+print(i)
+#u = npl.solve(-L, -b)
 
 xx, yy = np.meshgrid(np.linspace(0,1,n+2), np.linspace(0,1,n+2))
 uu = np.zeros((n+2,n+2))
@@ -58,7 +68,6 @@ uu[1:-1,1:-1] = u.reshape((n,n))
 
 fig = plt.figure(figsize=(8, 6), dpi=100)
 ax = fig.gca(projection='3d')
-#surf = ax.plot_surface(x.reshape((n,n)), y.reshape((n,n)), u.reshape((n,n)), rstride=1, cstride=1, cmap=cm.viridis)
 surf = ax.plot_surface(xx, yy, uu, rstride=1, cstride=1, cmap=cm.viridis)                    
 
 plt.show()

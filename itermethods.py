@@ -5,7 +5,7 @@ from scipy.sparse.linalg import spsolve
 from scipy.sparse.linalg import factorized
 from timeit import default_timer as timer
 
-def jacobi(A, b, x_0, tol=1e-6, rtol=1e-6):
+def jacobi(A, b, x_0, tol=1e-7, rtol=1e-7):
 
     A_1 = np.diag(np.diag(A))
     A_2 = A_1 - A
@@ -38,7 +38,7 @@ def jacobi(A, b, x_0, tol=1e-6, rtol=1e-6):
     return x, i
 
 
-def f_gauss_seidel(A, b, x_0, tol=1e-6, rtol=1e-6):
+def f_gauss_seidel(A, b, x_0, tol=1e-7, rtol=1e-7):
 
     A_1 = np.tril(A)
     A_2 = A_1 - A
@@ -70,7 +70,7 @@ def f_gauss_seidel(A, b, x_0, tol=1e-6, rtol=1e-6):
 
     return x, i
 
-def succesive_over_relaxation(A, b, x_0, w=0.5, tol=1e-6, rtol=1e-6):
+def succesive_over_relaxation(A, b, x_0, w=0.5, tol=1e-7, rtol=1e-7):
 
     A_1 = w * np.tril(A) + (1 - w) * np.diag(np.diag(A))
     A_2 = A_1 - A
@@ -102,7 +102,7 @@ def succesive_over_relaxation(A, b, x_0, w=0.5, tol=1e-6, rtol=1e-6):
 
     return x, i
 
-def jacobi_fp(A, b, x_0, tol=1e-6, rtol=1e-6):
+def jacobi_fp(A, b, x_0, tol=1e-7, rtol=1e-7):
 
     A_1 = np.diag(np.diag(A))
     A_2 = A_1 - A
@@ -134,7 +134,7 @@ def jacobi_fp(A, b, x_0, tol=1e-6, rtol=1e-6):
 
     return x, i
 
-def jacobi_fp_sparse(A, b, x_0, tol=1e-6, rtol=1e-6):
+def jacobi_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7):
 
     A_1 = sp.sparse.diags(A.diagonal())
     A_2 = A_1 - A

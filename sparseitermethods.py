@@ -7,7 +7,7 @@ from timeit import default_timer as timer
 import matplotlib.pyplot as plt
 
 
-def jacobi_fp_sparse(A, b, x_0, tol=1e-6, rtol=1e-6):
+def jacobi_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7):
 
     A_1 = sp.sparse.diags(A.diagonal())
     A_2 = A_1 - A
@@ -23,7 +23,7 @@ def jacobi_fp_sparse(A, b, x_0, tol=1e-6, rtol=1e-6):
     return fp_iteration(G, f, x_0, A, b, tol, rtol)
 
 
-def f_gauss_seidel_sparse_fp(A, b, x_0, tol=1e-6, rtol=1e-6):
+def f_gauss_seidel_sparse_fp(A, b, x_0, tol=1e-7, rtol=1e-7):
 
     A_1 = sp.sparse.tril(A)
     A_2 = A_1 - A
@@ -38,7 +38,7 @@ def f_gauss_seidel_sparse_fp(A, b, x_0, tol=1e-6, rtol=1e-6):
 
     return fp_iteration(G, f, x_0, A, b, tol, rtol)
 
-def succesive_over_relaxation_sparse(A, b, x_0, w=1.1, tol=1e-6, rtol=1e-6):
+def succesive_over_relaxation_sparse(A, b, x_0, w=1.1, tol=1e-7, rtol=1e-7):
 
     A_1 = sp.sparse.diags(A.diagonal()) + w * sp.sparse.tril(A, k=-1)
     A_2 = A_1 - A
@@ -51,8 +51,6 @@ def succesive_over_relaxation_sparse(A, b, x_0, w=1.1, tol=1e-6, rtol=1e-6):
     G = A_1_inv @ A_2
     f = A_1_inv @ b
 
-    #G = G.tocsr()
-
     return fp_iteration(G, f, x_0, A, b, tol, rtol)
 
 
@@ -64,6 +62,8 @@ def fp_iteration(G, f, x_0, A, b, tol, rtol):
 
     r = r0
 
+    residues = [r]
+
     i = 0
     while r > tol and r / r0 > rtol:
         i += 1
@@ -71,8 +71,9 @@ def fp_iteration(G, f, x_0, A, b, tol, rtol):
         x_k = x
         x = G @ x_k + f
         r = np.linalg.norm(A @ x - b)
+        residues.append(r)
 
-    return x, i
+    return x, i, np.array(residues)
 
 
 def onedtest(n):
@@ -121,7 +122,7 @@ def onedtest(n):
     return
 
 
-def build_L(n):
+def build_L_sparse(n):
 
     B  = sp.sparse.diags(np.full( n , -4),  0)
     B += sp.sparse.diags(np.full(n-1,  1), -1)
@@ -144,35 +145,51 @@ def build_L(n):
 
 def main():
 
-    n = 20
+    n = 10
+    print(f'n = {n}, n^2 = {n**2}')
 
     h = 1 / (n + 1)
 
-    L = build_L(n)
+    L = build_L_sparse(n)
 
     b = np.ones(n**2) * h**2
     x_0 = np.ones(n**2)
 
     #'''
     start = timer()
-    x_jac, i_jac = jacobi_fp_sparse(L, b, x_0)
+    x_jac, i_jac, r_jac = jacobi_fp_sparse(L, b, x_0)
     end = timer()
     print('Jac ', i_jac, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_jac - b))
+
+    plt.semilogy(list(range(len(r_jac))), r_jac, 'r-', label='JAC')
+    plt.semilogy(list(range(len(r_jac))), r_jac/r_jac[0], 'r--', label='JAC, rel')
     #'''
 
     #'''
     start = timer()
-    x_gs, i_gs = f_gauss_seidel_sparse_fp(L, b, x_0)
+    x_gs, i_gs, r_gs = f_gauss_seidel_sparse_fp(L, b, x_0)
     end = timer()
     print('GS ', i_gs, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_gs - b))
+
+    plt.semilogy(list(range(len(r_gs))), r_gs, 'b-', label='GS')
+    plt.semilogy(list(range(len(r_gs))), r_gs/r_gs[0], 'b--', label='GS, rel')
+
     #'''
 
     w = 1.5
     print(f'w = {w}')
     start = timer()
-    x_sor, i_sor = succesive_over_relaxation_sparse(L, b, x_0, w)
+    x_sor, i_sor, r_sor = succesive_over_relaxation_sparse(L, b, x_0, w)
     end = timer()
     print('SOR ', i_sor, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_sor - b))
+    
+    plt.semilogy(list(range(len(r_sor))), r_sor, 'k-', label=rf'SOR, $\omega = {w}$')
+    plt.semilogy(list(range(len(r_sor))), r_sor/r_sor[0], 'k--', label='SOR, rel')
+    
+    plt.legend()
+    plt.title('Residuals')
+    plt.xlabel('Iterations')
+    plt.show()
 
 
 
