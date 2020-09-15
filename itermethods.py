@@ -168,12 +168,8 @@ def jacobi_fp_sparse(A, b, x_0, tol=1e-6, rtol=1e-6):
 
 
 def main():
-    import numpy as np
-    import scipy as sp
-    from timeit import default_timer as timer
 
     
-
     np.random.seed(0)
 
     n = 150
