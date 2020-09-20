@@ -15,7 +15,7 @@ def jacobi_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7):
     start = timer()
     A_1_inv = sp.sparse.linalg.inv(A_1.tocsc()).todok()
     end = timer()
-    print(f'{(end-start)*1e3:.2f}ms invertion')
+    print(f'{(end-start)*1e3:.2f}ms inversion')
 
     G = A_1_inv @ A_2
     f = A_1_inv @ b
@@ -31,7 +31,7 @@ def f_gauss_seidel_sparse_fp(A, b, x_0, tol=1e-7, rtol=1e-7):
     start = timer()
     A_1_inv = sp.sparse.linalg.inv(A_1.tocsc()).todok()
     end = timer()
-    print(f'{(end-start)*1e3:.2f}ms invertion')
+    print(f'{(end-start)*1e3:.2f}ms inversion')
 
     G = A_1_inv @ A_2
     f = A_1_inv @ b
@@ -46,12 +46,17 @@ def succesive_over_relaxation_sparse(A, b, x_0, w=1.1, tol=1e-7, rtol=1e-7):
     start = timer()
     A_1_inv = sp.sparse.linalg.inv(A_1.tocsc())
     end = timer()
-    print(f'{(end-start)*1e3:.2f}ms invertion')
+    print(f'{(end-start)*1e3:.2f}ms inversion')
 
     G = A_1_inv @ A_2
     f = A_1_inv @ b
 
     return fp_iteration(G, f, x_0, A, b, tol, rtol)
+
+def elementwise_jacobi(A, b, x_0, tol=1e-7, rtol=1e-7):
+    
+    
+    return
 
 
 def fp_iteration(G, f, x_0, A, b, tol, rtol):
@@ -186,9 +191,11 @@ def main():
     plt.semilogy(list(range(len(r_sor))), r_sor, 'k-', label=rf'SOR, $\omega = {w}$')
     plt.semilogy(list(range(len(r_sor))), r_sor/r_sor[0], 'k--', label='SOR, rel')
     
+    plt.axhline(y=1e-7, color='black', linestyle='dashed', linewidth=0.7)
     plt.legend()
     plt.title('Residuals')
     plt.xlabel('Iterations')
+    plt.xlim(0, max(i_sor, i_gs, i_jac))
     plt.show()
 
 
