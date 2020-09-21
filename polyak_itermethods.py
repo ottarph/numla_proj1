@@ -10,7 +10,7 @@ from sparseitermethods import *
 
 
 
-def polyak_heavy_ball_iteration(H, x_0, A, b, h, l, tol, rtol):
+def polyak_heavy_ball_iteration(H, x_0, A, b, h, l, tol, rtol, max_iter):
 
     hl = h * l
 
@@ -27,6 +27,8 @@ def polyak_heavy_ball_iteration(H, x_0, A, b, h, l, tol, rtol):
     i = 0
     while r > tol and r / r0 > rtol:
         i += 1
+        if i > max_iter:
+            raise Exception("Failed to converge within bounds.")
 
         x_k = x
         p_k = p
@@ -40,7 +42,7 @@ def polyak_heavy_ball_iteration(H, x_0, A, b, h, l, tol, rtol):
     return x, i, np.array(residues)
 
 
-def jacobi_heavy_ball_sparse(A, b, x_0, h, l, tol=1e-7, rtol=1e-7):
+def jacobi_heavy_ball_sparse(A, b, x_0, h, l, tol=1e-7, rtol=1e-7, max_iter=1000):
 
     A_1 = sp.sparse.diags(A.diagonal())
     A_2 = A_1 - A
@@ -51,10 +53,10 @@ def jacobi_heavy_ball_sparse(A, b, x_0, h, l, tol=1e-7, rtol=1e-7):
     print(f'{(end-start)*1e3:.2f}ms inversion')
 
 
-    return polyak_heavy_ball_iteration(A_1_inv, x_0, A, b, h, l, tol, rtol)
+    return polyak_heavy_ball_iteration(A_1_inv, x_0, A, b, h, l, tol, rtol, max_iter)
 
 
-def f_gauss_seidel_heavy_ball_sparse(A, b, x_0, h, l, tol=1e-7, rtol=1e-7):
+def f_gauss_seidel_heavy_ball_sparse(A, b, x_0, h, l, tol=1e-7, rtol=1e-7, max_iter=1000):
 
     A_1 = sp.sparse.tril(A)
     A_2 = A_1 - A
@@ -65,10 +67,10 @@ def f_gauss_seidel_heavy_ball_sparse(A, b, x_0, h, l, tol=1e-7, rtol=1e-7):
     print(f'{(end-start)*1e3:.2f}ms inversion')
 
 
-    return polyak_heavy_ball_iteration(A_1_inv, x_0, A, b, h, l, tol, rtol)
+    return polyak_heavy_ball_iteration(A_1_inv, x_0, A, b, h, l, tol, rtol, max_iter)
 
 
-def succesive_over_relaxation_heavy_ball_sparse(A, b, x_0, w, h, l, tol=1e-7, rtol=1e-7):
+def succesive_over_relaxation_heavy_ball_sparse(A, b, x_0, w, h, l, tol=1e-7, rtol=1e-7, max_iter=1000):
 
     A_1 = sp.sparse.diags(A.diagonal()) + w * sp.sparse.tril(A, k=-1)
     A_2 = A_1 - A
@@ -79,12 +81,47 @@ def succesive_over_relaxation_heavy_ball_sparse(A, b, x_0, w, h, l, tol=1e-7, rt
     print(f'{(end-start)*1e3:.2f}ms inversion')
 
 
-    return polyak_heavy_ball_iteration(A_1_inv, x_0, A, b, h, l, tol, rtol)
+    return polyak_heavy_ball_iteration(A_1_inv, x_0, A, b, h, l, tol, rtol, max_iter)
+
+
+def max_eigenvalue_heavy_ball_sparse(A, b, x_0, h, l, tol=1e-7, rtol=1e-7, max_iter=1000, Laplace=False):
+
+    if Laplace:
+        n = int(np.sqrt(x_0.shape[0]))
+
+        rr = np.arange(1, n+1)
+        v1 = np.sin(np.pi / (n + 1) * rr)
+
+        V = np.outer(v1, v1)
+
+        v = V.flatten()
+        v = v / np.linalg.norm(v)
+
+        A_d = sp.sparse.diags(A.diagonal())
+
+        u = (A - A_d) @ v
+
+        s = 4 * np.cos(np.pi / (n+1))
+
+        A_1 = A_d + s * np.outer(v,v)
+        A_1 = sp.sparse.csc_matrix(A_1)
+
+        start = timer()
+        A_1_inv = -0.25 * ( np.eye(n**2) + s / (4 - s) * np.outer(v,v) )
+        A_1_inv = sp.sparse.csc_matrix(A_1_inv)
+        end = timer()
+        print(f'{(end-start)*1e3:.2f}ms inversion')
+
+
+    else:
+        raise NotImplementedError
+
+    
+
+    return polyak_heavy_ball_iteration(A_1_inv, x_0, A, b, h, l, tol, rtol, max_iter)
 
 
 def main():
-
-    
 
     n = 10
     dx = 1 / (n + 1)
@@ -137,8 +174,8 @@ def main():
 
 # Change to SOR
 
-    h = 1.3
-    l = 0.7
+    h = 1.25
+    l = 0.75
 
     w = 1.5
 
@@ -159,6 +196,49 @@ def main():
 
     plt.semilogy(list(range(len(r_sor))), r_sor/r_sor[0], 'k--', label='Sor, rel')
     #'''
+
+#region
+    '''
+    i_min = 100
+    h_min, l_min = -1, -1
+    for h in np.linspace(1.2, 1.3, 10):
+        print(f'h = {h}')
+        for l in np.linspace(0.7, 0.8, 10):
+            try:
+                x, i, r = succesive_over_relaxation_heavy_ball_sparse(L, b, x_0, w, h, l, max_iter=100)
+                if i < i_min:
+                    i_min = i
+                    h_min, l_min = h, l
+            except:
+                pass
+    print(i_min, h_min, l_min)
+    '''
+#endregion
+
+    h = 0.7
+    l = 0.7
+
+    #''' Max eigenvalue with Polyak Heavy ball
+    start = timer()
+    x_meHB, i_meHB, r_meHB = max_eigenvalue_heavy_ball_sparse(L, b, x_0, h, l, Laplace=True)
+    end = timer()
+    print('MeHB ', i_meHB, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_meHB - b))
+
+    plt.semilogy(list(range(len(r_meHB))), r_meHB/r_meHB[0], 'g-', label=rf'MeHB, rel, $h = {h}, \lambda = {l}$')
+    #'''
+
+    #''' Max eigenvalue without
+    start = timer()
+    x_me, i_me, r_me = max_eigenvalue_fp_sparse(L, b, x_0, h, l, Laplace=True)
+    end = timer()
+    print('Me ', i_me, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_me - b))
+
+    plt.semilogy(list(range(len(r_me))), r_me/r_me[0], 'g--', label=rf'Me, rel')
+    #'''
+
+    #x_me, i_me, r_me = max_eigenvalue_fp_sparse(L, b, x_0, Laplace=True)
+    #print(i_me, r_me[-1])
+    
 
 
     plt.axhline(y=1e-7, color='black', linestyle='dashed', linewidth=0.7)

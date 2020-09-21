@@ -53,6 +53,46 @@ def succesive_over_relaxation_sparse(A, b, x_0, w=1.1, tol=1e-7, rtol=1e-7):
 
     return fp_iteration(G, f, x_0, A, b, tol, rtol)
 
+
+def max_eigenvalue_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7, max_iter=1000, Laplace=False):
+
+    if Laplace:
+        n = int(np.sqrt(x_0.shape[0]))
+
+        rr = np.arange(1, n+1)
+        v1 = np.sin(np.pi / (n + 1) * rr)
+
+        V = np.outer(v1, v1)
+
+        v = V.flatten()
+        v = v / np.linalg.norm(v)
+
+        A_d = sp.sparse.diags(A.diagonal())
+
+        u = (A - A_d) @ v
+
+        s = 4 * np.cos(np.pi / (n+1))
+
+        A_1 = A_d + s * np.outer(v,v)
+        A_1 = sp.sparse.csc_matrix(A_1)
+        A_2 = A_1 - A
+
+        start = timer()
+        A_1_inv = -0.25 * ( np.eye(n**2) + s / (4 - s) * np.outer(v,v) )
+        A_1_inv = sp.sparse.csc_matrix(A_1_inv)
+        end = timer()
+        print(f'{(end-start)*1e3:.2f}ms inversion')
+
+    else:
+        raise NotImplementedError
+
+    G = A_1_inv @ A_2
+    f = A_1_inv @ b
+    #print(G, f)
+
+    return fp_iteration(G, f, x_0, A, b, tol, rtol)
+
+
 def elementwise_jacobi(A, b, x_0, tol=1e-7, rtol=1e-7):
     
     
