@@ -214,7 +214,7 @@ def main():
     '''
 #endregion
 
-    h = 0.7
+    h = 0.9
     l = 0.7
 
     #''' Max eigenvalue with Polyak Heavy ball
@@ -234,10 +234,6 @@ def main():
 
     plt.semilogy(list(range(len(r_me))), r_me/r_me[0], 'g--', label=rf'Me, rel')
     #'''
-
-    #x_me, i_me, r_me = max_eigenvalue_fp_sparse(L, b, x_0, Laplace=True)
-    #print(i_me, r_me[-1])
-    
 
 
     plt.axhline(y=1e-7, color='black', linestyle='dashed', linewidth=0.7)
