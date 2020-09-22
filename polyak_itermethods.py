@@ -172,7 +172,6 @@ def main():
     plt.semilogy(list(range(len(r_gs))), r_gs/r_gs[0], 'b--', label='Gs, rel')
     #'''
 
-# Change to SOR
 
     h = 1.25
     l = 0.75
@@ -229,7 +228,7 @@ def main():
 
     #''' Max eigenvalue without
     start = timer()
-    x_me, i_me, r_me = max_eigenvalue_fp_sparse(L, b, x_0, h, l, Laplace=True)
+    x_me, i_me, r_me = max_eigenvalue_fp_sparse(L, b, x_0, Laplace=True)
     end = timer()
     print('Me ', i_me, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_me - b))
 
