@@ -124,9 +124,15 @@ def max_eigenvalue_heavy_ball_sparse(A, b, x_0, h, l, tol=1e-7, rtol=1e-7, max_i
 def main():
 
     n = 10
-    dx = 1 / (n + 1)
+
+    TOL = 1e-14
+    RTOL = 1e-14
+
+
 
     L = build_L_sparse(n)
+
+    dx = 1 / (n + 1)
     b = np.ones(n**2) * dx**2
     x_0 = np.ones(n**2)
 
@@ -135,7 +141,7 @@ def main():
 
     #''' Jacobi with Polyak Heavy ball
     start = timer()
-    x_jacHB, i_jacHB, r_jacHB = jacobi_heavy_ball_sparse(L, b, x_0, h, l)
+    x_jacHB, i_jacHB, r_jacHB = jacobi_heavy_ball_sparse(L, b, x_0, h, l, tol=TOL, rtol=RTOL)
     end = timer()
     print('JacHB ', i_jacHB, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_jacHB - b))
 
@@ -144,7 +150,7 @@ def main():
 
     #''' Jacobi without
     start = timer()
-    x_jac, i_jac, r_jac = jacobi_fp_sparse(L, b, x_0)
+    x_jac, i_jac, r_jac = jacobi_fp_sparse(L, b, x_0, tol=TOL, rtol=RTOL)
     end = timer()
     print('Jac ', i_jac, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_jac - b))
 
@@ -156,7 +162,7 @@ def main():
 
     #''' Forward Gauss-Seidel with Polyak Heavy ball
     start = timer()
-    x_gsHB, i_gsHB, r_gsHB = f_gauss_seidel_heavy_ball_sparse(L, b, x_0, h, l)
+    x_gsHB, i_gsHB, r_gsHB = f_gauss_seidel_heavy_ball_sparse(L, b, x_0, h, l, tol=TOL, rtol=RTOL)
     end = timer()
     print('GsHB  ', i_gsHB, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_gsHB - b))
 
@@ -165,7 +171,7 @@ def main():
 
     #''' Forward Gauss-Seidel without
     start = timer()
-    x_gs, i_gs, r_gs = f_gauss_seidel_sparse_fp(L, b, x_0)
+    x_gs, i_gs, r_gs = f_gauss_seidel_sparse_fp(L, b, x_0, tol=TOL, rtol=RTOL)
     end = timer()
     print('Gs  ', i_gs, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_gs - b))
 
@@ -180,7 +186,7 @@ def main():
 
     #''' SOR with Polyak Heavy ball
     start = timer()
-    x_sorHB, i_sorHB, r_sorHB = succesive_over_relaxation_heavy_ball_sparse(L, b, x_0, w, h, l)
+    x_sorHB, i_sorHB, r_sorHB = succesive_over_relaxation_heavy_ball_sparse(L, b, x_0, w, h, l, tol=TOL, rtol=RTOL)
     end = timer()
     print('SorHB ', i_sorHB, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_sorHB - b))
 
@@ -189,7 +195,7 @@ def main():
 
     #''' SOR without
     start = timer()
-    x_sor, i_sor, r_sor = succesive_over_relaxation_sparse(L, b, x_0, w)
+    x_sor, i_sor, r_sor = succesive_over_relaxation_sparse(L, b, x_0, w, tol=TOL, rtol=RTOL)
     end = timer()
     print('Sor ', i_sor, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_sor - b))
 
@@ -219,7 +225,7 @@ def main():
 
     #''' Max eigenvalue with Polyak Heavy ball
     start = timer()
-    x_meHB, i_meHB, r_meHB = max_eigenvalue_heavy_ball_sparse(L, b, x_0, h, l, Laplace=True)
+    x_meHB, i_meHB, r_meHB = max_eigenvalue_heavy_ball_sparse(L, b, x_0, h, l, tol=TOL, rtol=RTOL, Laplace=True)
     end = timer()
     print('MeHB ', i_meHB, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_meHB - b))
 
@@ -228,7 +234,7 @@ def main():
 
     #''' Max eigenvalue without
     start = timer()
-    x_me, i_me, r_me = max_eigenvalue_fp_sparse(L, b, x_0, Laplace=True)
+    x_me, i_me, r_me = max_eigenvalue_fp_sparse(L, b, x_0, tol=TOL, rtol=RTOL, Laplace=True)
     end = timer()
     print('Me ', i_me, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_me - b))
 
@@ -236,7 +242,7 @@ def main():
     #'''
 
 
-    plt.axhline(y=1e-7, color='black', linestyle='dashed', linewidth=0.7)
+    plt.axhline(y=RTOL, color='black', linestyle='dashed', linewidth=0.7)
     plt.legend()
     plt.title('Residuals')
     plt.xlabel('Iterations')

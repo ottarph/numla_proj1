@@ -222,6 +222,9 @@ def main():
     #'''
 
     w = 1.5
+    w = 1.561
+    w = 2 / (1 + np.sin(np.pi / (n+1)))
+    print(w)
     print(f'w = {w}')
     start = timer()
     x_sor, i_sor, r_sor = succesive_over_relaxation_sparse(L, b, x_0, w)
