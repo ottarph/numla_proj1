@@ -7,6 +7,7 @@ from timeit import default_timer as timer
 import matplotlib.pyplot as plt
 
 from sparseitermethods import *
+from matrix_builders import *
 from polyak_itermethods import *
 
 def jacobi_spectral_radius(A):

@@ -6,6 +6,7 @@ from scipy.sparse.linalg import factorized
 from timeit import default_timer as timer
 import matplotlib.pyplot as plt
 
+from matrix_builders import *
 
 def jacobi_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7):
 
@@ -167,24 +168,7 @@ def onedtest(n):
     return
 
 
-def build_L_sparse(n):
 
-    B  = sp.sparse.diags(np.full( n , -4),  0)
-    B += sp.sparse.diags(np.full(n-1,  1), -1)
-    B += sp.sparse.diags(np.full(n-1,  1), +1)
-
-    I = sp.sparse.identity(n)
-
-    L = sp.sparse.dok_matrix((n**2,n**2))
-
-    L[:n,:n] = B
-    for i in range(1, n):
-        L[(i-1)*n:i*n, i*n:(i+1)*n] = I
-        L[i*n:(i+1)*n, i*n:(i+1)*n] = B
-        L[i*n:(i+1)*n, (i-1)*n:i*n] = I
-
-
-    return L
 
     
 

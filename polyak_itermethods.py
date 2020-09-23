@@ -7,7 +7,7 @@ from timeit import default_timer as timer
 import matplotlib.pyplot as plt
 
 from sparseitermethods import *
-
+from matrix_builders import *
 
 
 def polyak_heavy_ball_iteration(H, x_0, A, b, h, l, tol, rtol, max_iter):
@@ -98,8 +98,6 @@ def max_eigenvalue_heavy_ball_sparse(A, b, x_0, h, l, tol=1e-7, rtol=1e-7, max_i
         v = v / np.linalg.norm(v)
 
         A_d = sp.sparse.diags(A.diagonal())
-
-        u = (A - A_d) @ v
 
         s = 4 * np.cos(np.pi / (n+1))
 
