@@ -39,13 +39,16 @@ def polyak_heavy_ball_iteration(H, x_0, A, b, h, l, tol, rtol, max_iter):
     return x, i, np.array(residues)
 
 
-def jacobi_heavy_ball_sparse(A, b, x_0, h, l, tol=1e-7, rtol=1e-7, max_iter=1000):
+def jacobi_heavy_ball_sparse(A, b, x_0, h, l, tol=1e-7, rtol=1e-7, max_iter=1000, Laplace=False):
 
     A_1 = sp.sparse.diags(A.diagonal())
     A_2 = A_1 - A
 
     start = timer()
-    A_1_inv = sp.sparse.linalg.inv(A_1.tocsc()).todok()
+    if Laplace:
+        A_1_inv = sp.sparse.diags(1 / A.diagonal())
+    else:
+        A_1_inv = sp.sparse.linalg.inv(A_1.tocsc())
     end = timer()
     print(f'{(end-start)*1e3:.2f}ms inversion')
 
@@ -153,7 +156,7 @@ def main():
 
     #''' Jacobi with Polyak Heavy ball
     start = timer()
-    x_jacHB, i_jacHB, r_jacHB = jacobi_heavy_ball_sparse(L, b, x_0, h, l, tol=TOL, rtol=RTOL)
+    x_jacHB, i_jacHB, r_jacHB = jacobi_heavy_ball_sparse(L, b, x_0, h, l, tol=TOL, rtol=RTOL, Laplace=True)
     end = timer()
     print('JacHB ', i_jacHB, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_jacHB - b))
 
@@ -162,7 +165,7 @@ def main():
 
     #''' Jacobi without
     start = timer()
-    x_jac, i_jac, r_jac = jacobi_fp_sparse(L, b, x_0, tol=TOL, rtol=RTOL)
+    x_jac, i_jac, r_jac = jacobi_fp_sparse(L, b, x_0, tol=TOL, rtol=RTOL, Laplace=True)
     end = timer()
     print('Jac ', i_jac, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_jac - b))
 

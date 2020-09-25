@@ -8,13 +8,16 @@ import matplotlib.pyplot as plt
 
 from matrix_builders import *
 
-def jacobi_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7, max_iter=1000):
+def jacobi_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7, max_iter=1000, Laplace=False):
 
     A_1 = sp.sparse.diags(A.diagonal())
     A_2 = A_1 - A
 
     start = timer()
-    A_1_inv = sp.sparse.linalg.inv(A_1.tocsc()).todok()
+    if Laplace:
+        A_1_inv = sp.sparse.diags(1 / A.diagonal())
+    else:
+        A_1_inv = sp.sparse.linalg.inv(A_1.tocsc())
     end = timer()
     print(f'{(end-start)*1e3:.2f}ms inversion')
 
@@ -108,7 +111,6 @@ def max_eigenvalue_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7, max_iter=1000, Lapl
 
     G = A_1_inv @ A_2
     f = A_1_inv @ b
-    #print(G, f)
 
     return fp_iteration(G, f, x_0, A, b, tol, rtol, max_iter)
 
@@ -143,7 +145,6 @@ def onedtest(n):
     A += np.diag(np.full(n-1, -1, dtype=float), +1)
 
     x = np.arange(1, n+1, dtype=float)
-    #b = A @ x
     b = np.ones(n)
 
 

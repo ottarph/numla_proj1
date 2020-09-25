@@ -12,6 +12,9 @@ from spectral_radius import *
 
 
 def build_L_sparse(n):
+    '''
+        Builds the block-tridiagonal discrete Laplacian as a sparse matrix.
+    '''
 
     B  = sp.sparse.diags(np.full( n , -4),  0)
     B += sp.sparse.diags(np.full(n-1,  1), -1)
@@ -31,6 +34,9 @@ def build_L_sparse(n):
 
 
 def householder(X):
+    '''
+        QR-factorization with householder projections.
+    '''
     X = np.copy(X)
     n, m = X.shape
 
@@ -64,21 +70,32 @@ def householder(X):
     return Q, R[:m,:m]
 
 def random_orthogonal(n, seed=False):
+    '''
+        Builds a random orthogonal matrix by use of the Q from a QR-factorization
+        of a random matrix. Since singular-matrices have measure zero, the
+        algorithm is highly likely, although not guaranteed, to succeed.
+    '''
     if seed:
         np.random.seed(seed)
 
     X = np.random.rand(n,n)
 
-    return householder(X)[0]
+    Q = householder(X)[0]
+    assert np.allclose(Q.T @ Q, np.eye(n))
+
+    return Q
     
 
 def random_spd(n, seed=False):
+    '''
+        Returns a random symmetric positive-definite matrix.
+    '''
     if seed:
         np.random.seed(seed)
     
     eigvals = np.random.random(n)
     assert np.all(eigvals > 0)
-    L = np.diag(eigvals) #* 10*(n+1)**2
+    L = np.diag(eigvals)
 
     Q = random_orthogonal(n)
 
@@ -86,6 +103,10 @@ def random_spd(n, seed=False):
 
     
 def random_test_matrix(n, seed=False):
+    '''
+        Though stated to in the project description, this method does not produce a positive,
+        or negative, definite matrix.
+    '''
     if seed:
         np.random.seed(seed)
 
@@ -114,12 +135,6 @@ def main():
 
     L = random_test_matrix(n, seed=0)
     L = random_spd(n**2)
-    #print(L.todense().round(2))
-    #B = L[:3,:3].todense()
-    #print(np.linalg.eigvals(B))
-    #print(np.linalg.eigvals(L.todense()))
-    #print(np.linalg.eigvals(L))
-    #print(L.round(2))
 
     L = sp.sparse.csc_matrix(L)
     L = random_test_matrix(n, seed=1) # 3

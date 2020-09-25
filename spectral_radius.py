@@ -11,6 +11,9 @@ from matrix_builders import *
 from polyak_itermethods import *
 
 def jacobi_spectral_radius(A):
+    '''
+        Finds the spectral radius of G for the Jacobi method.
+    '''
 
     A_1 = np.diag(np.diag(A))
     A_2 = A_1 - A
@@ -25,6 +28,9 @@ def jacobi_spectral_radius(A):
 
 
 def f_gauss_seidel_spectral_radius(A):
+    '''
+        Finds the spectral radius of G for the forward Gauss-Seidel method.
+    '''
 
     A_1 = np.tril(A)
     A_2 = A_1 - A
@@ -39,6 +45,9 @@ def f_gauss_seidel_spectral_radius(A):
 
 
 def successive_over_relaxation_spectral_radius(A, w):
+    '''
+        Finds the spectral radius of G for the successive over relaxation method.
+    '''
 
     A_1 = np.diag(np.diag(A)) + w * np.tril(A, k=-1)
     A_2 = A_1 - A
