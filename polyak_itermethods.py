@@ -1,8 +1,5 @@
 import numpy as np
 import scipy as sp
-from scipy.sparse import identity, dok_matrix
-from scipy.sparse.linalg import spsolve
-from scipy.sparse.linalg import factorized
 from timeit import default_timer as timer
 import matplotlib.pyplot as plt
 
@@ -70,7 +67,7 @@ def f_gauss_seidel_heavy_ball_sparse(A, b, x_0, h, l, tol=1e-7, rtol=1e-7, max_i
     return polyak_heavy_ball_iteration(A_1_inv, x_0, A, b, h, l, tol, rtol, max_iter)
 
 
-def succesive_over_relaxation_heavy_ball_sparse(A, b, x_0, w, h, l, tol=1e-7, rtol=1e-7, max_iter=1000):
+def successive_over_relaxation_heavy_ball_sparse(A, b, x_0, w, h, l, tol=1e-7, rtol=1e-7, max_iter=1000):
 
     A_1 = sp.sparse.diags(A.diagonal()) + w * sp.sparse.tril(A, k=-1)
     A_2 = A_1 - A
@@ -112,8 +109,25 @@ def max_eigenvalue_heavy_ball_sparse(A, b, x_0, h, l, tol=1e-7, rtol=1e-7, max_i
 
 
     else:
-        raise NotImplementedError
+        
+        A_d = sp.sparse.diags(A.diagonal())
+        Amd = A - A_d
 
+        V = sp.sparse.linalg.eigs(Amd)
+
+        ind = np.argmax(V[0])
+
+        s, v = V[0][ind], V[1][:,ind]
+        s, v = float(s), v.astype(float)
+
+        A_1 = A_d + s * np.outer(v,v)
+        A_1 = sp.sparse.csc_matrix(A_1)
+
+        start = timer()
+        A_1_inv = sp.sparse.linalg.inv(A_1)
+        A_1_inv = sp.sparse.csc_matrix(A_1_inv)
+        end = timer()
+        print(f'{(end-start)*1e3:.2f}ms inversion')
     
 
     return polyak_heavy_ball_iteration(A_1_inv, x_0, A, b, h, l, tol, rtol, max_iter)
@@ -184,7 +198,7 @@ def main():
 
     #''' SOR with Polyak Heavy ball
     start = timer()
-    x_sorHB, i_sorHB, r_sorHB = succesive_over_relaxation_heavy_ball_sparse(L, b, x_0, w, h, l, tol=TOL, rtol=RTOL)
+    x_sorHB, i_sorHB, r_sorHB = successive_over_relaxation_heavy_ball_sparse(L, b, x_0, w, h, l, tol=TOL, rtol=RTOL)
     end = timer()
     print('SorHB ', i_sorHB, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_sorHB - b))
 
@@ -193,37 +207,21 @@ def main():
 
     #''' SOR without
     start = timer()
-    x_sor, i_sor, r_sor = succesive_over_relaxation_sparse(L, b, x_0, w, tol=TOL, rtol=RTOL)
+    x_sor, i_sor, r_sor = successive_over_relaxation_sparse(L, b, x_0, w, tol=TOL, rtol=RTOL)
     end = timer()
     print('Sor ', i_sor, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_sor - b))
 
     plt.semilogy(list(range(len(r_sor))), r_sor/r_sor[0], 'k--', label='Sor, rel')
     #'''
 
-#region
-    '''
-    i_min = 100
-    h_min, l_min = -1, -1
-    for h in np.linspace(1.2, 1.3, 10):
-        print(f'h = {h}')
-        for l in np.linspace(0.7, 0.8, 10):
-            try:
-                x, i, r = succesive_over_relaxation_heavy_ball_sparse(L, b, x_0, w, h, l, max_iter=100)
-                if i < i_min:
-                    i_min = i
-                    h_min, l_min = h, l
-            except:
-                pass
-    print(i_min, h_min, l_min)
-    '''
-#endregion
 
     h = 0.9
     l = 0.7
 
     #''' Max eigenvalue with Polyak Heavy ball
     start = timer()
-    x_meHB, i_meHB, r_meHB = max_eigenvalue_heavy_ball_sparse(L, b, x_0, h, l, tol=TOL, rtol=RTOL, Laplace=True)
+    #x_meHB, i_meHB, r_meHB = max_eigenvalue_heavy_ball_sparse(L, b, x_0, h, l, tol=TOL, rtol=RTOL, Laplace=True)
+    x_meHB, i_meHB, r_meHB = max_eigenvalue_heavy_ball_sparse(L, b, x_0, h, l, tol=TOL, rtol=RTOL, Laplace=False)
     end = timer()
     print('MeHB ', i_meHB, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_meHB - b))
 
@@ -232,7 +230,8 @@ def main():
 
     #''' Max eigenvalue without
     start = timer()
-    x_me, i_me, r_me = max_eigenvalue_fp_sparse(L, b, x_0, tol=TOL, rtol=RTOL, Laplace=True)
+    #x_me, i_me, r_me = max_eigenvalue_fp_sparse(L, b, x_0, tol=TOL, rtol=RTOL, Laplace=True)
+    x_me, i_me, r_me = max_eigenvalue_fp_sparse(L, b, x_0, tol=TOL, rtol=RTOL, Laplace=False)
     end = timer()
     print('Me ', i_me, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_me - b))
 
@@ -244,7 +243,7 @@ def main():
     plt.legend()
     plt.title('Residuals')
     plt.xlabel('Iterations')
-    plt.xlim(0, max(i_sor, i_gs, i_jac))
+    plt.xlim(0, max(i_me, i_sor, i_gs, i_jac, i_meHB, i_sorHB, i_gsHB, i_jacHB))
     plt.show()
 
     return

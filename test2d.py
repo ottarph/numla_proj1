@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import matplotlib
 
-n = 40
+n = 4
 h = 1 / (n+1)
 
 
@@ -27,6 +27,9 @@ if n <= 15:
     for i in range(n*n):
         plt.text(x[i], y[i], u[i])
 
+    plt.grid()
+    plt.xlabel('$x$')
+    plt.ylabel('$y$')
     plt.show()
 
 
@@ -56,7 +59,7 @@ u_0 = np.ones_like(x)
 u_0 = np.zeros_like(x)
 
 w = 1.5
-u, i, r = succesive_over_relaxation_sparse(L_s, b, u_0, w)
+u, i, r = successive_over_relaxation_sparse(L_s, b, u_0, w)
 #u, i, r = f_gauss_seidel_sparse_fp(L_s, b, u_0)
 #u, i, r = jacobi_fp_sparse(L_s, b, u_0)
 print(i)

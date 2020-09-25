@@ -38,7 +38,7 @@ def f_gauss_seidel_spectral_radius(A):
     return np.max(np.abs(ss))
 
 
-def succesive_over_relaxation_spectral_radius(A, w):
+def successive_over_relaxation_spectral_radius(A, w):
 
     A_1 = np.diag(np.diag(A)) + w * np.tril(A, k=-1)
     A_2 = A_1 - A
@@ -66,14 +66,14 @@ def main():
     '''
     w = 1.5
     for w in np.linspace(1.561, 1.562, 11):
-        print(w, succesive_over_relaxation_spectral_radius(L, w))
+        print(w, successive_over_relaxation_spectral_radius(L, w))
 
     # w = 1.561 er good
     '''
 
     # Strikwerda 13.4, p. 354
     w = 2 / (1 + np.sin(np.pi / (n+1)) )
-    print(succesive_over_relaxation_spectral_radius(L, w))
+    print(successive_over_relaxation_spectral_radius(L, w))
 
     return
 

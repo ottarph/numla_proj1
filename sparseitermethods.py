@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 from matrix_builders import *
 
-def jacobi_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7):
+def jacobi_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7, max_iter=1000):
 
     A_1 = sp.sparse.diags(A.diagonal())
     A_2 = A_1 - A
@@ -21,10 +21,10 @@ def jacobi_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7):
     G = A_1_inv @ A_2
     f = A_1_inv @ b
 
-    return fp_iteration(G, f, x_0, A, b, tol, rtol)
+    return fp_iteration(G, f, x_0, A, b, tol, rtol, max_iter)
 
 
-def f_gauss_seidel_sparse_fp(A, b, x_0, tol=1e-7, rtol=1e-7):
+def f_gauss_seidel_sparse_fp(A, b, x_0, tol=1e-7, rtol=1e-7, max_iter=1000):
 
     A_1 = sp.sparse.tril(A)
     A_2 = A_1 - A
@@ -37,9 +37,9 @@ def f_gauss_seidel_sparse_fp(A, b, x_0, tol=1e-7, rtol=1e-7):
     G = A_1_inv @ A_2
     f = A_1_inv @ b
 
-    return fp_iteration(G, f, x_0, A, b, tol, rtol)
+    return fp_iteration(G, f, x_0, A, b, tol, rtol, max_iter)
 
-def succesive_over_relaxation_sparse(A, b, x_0, w=1.1, tol=1e-7, rtol=1e-7):
+def successive_over_relaxation_sparse(A, b, x_0, w=1.1, tol=1e-7, rtol=1e-7, max_iter=1000):
 
     A_1 = sp.sparse.diags(A.diagonal()) + w * sp.sparse.tril(A, k=-1)
     A_2 = A_1 - A
@@ -52,7 +52,7 @@ def succesive_over_relaxation_sparse(A, b, x_0, w=1.1, tol=1e-7, rtol=1e-7):
     G = A_1_inv @ A_2
     f = A_1_inv @ b
 
-    return fp_iteration(G, f, x_0, A, b, tol, rtol)
+    return fp_iteration(G, f, x_0, A, b, tol, rtol, max_iter)
 
 
 def max_eigenvalue_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7, max_iter=1000, Laplace=False):
@@ -85,22 +85,35 @@ def max_eigenvalue_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7, max_iter=1000, Lapl
         print(f'{(end-start)*1e3:.2f}ms inversion')
 
     else:
-        raise NotImplementedError
+        
+        A_d = sp.sparse.diags(A.diagonal())
+        Amd = A - A_d
+
+        V = sp.sparse.linalg.eigs(Amd)
+
+        ind = np.argmax(V[0])
+
+        s, v = V[0][ind], V[1][:,ind]
+        s, v = float(s), v.astype(float)
+
+        A_1 = A_d + s * np.outer(v,v)
+        A_1 = sp.sparse.csc_matrix(A_1)
+        A_2 = A_1 - A
+
+        start = timer()
+        A_1_inv = sp.sparse.linalg.inv(A_1)
+        A_1_inv = sp.sparse.csc_matrix(A_1_inv)
+        end = timer()
+        print(f'{(end-start)*1e3:.2f}ms inversion')
 
     G = A_1_inv @ A_2
     f = A_1_inv @ b
     #print(G, f)
 
-    return fp_iteration(G, f, x_0, A, b, tol, rtol)
+    return fp_iteration(G, f, x_0, A, b, tol, rtol, max_iter)
 
 
-def elementwise_jacobi(A, b, x_0, tol=1e-7, rtol=1e-7):
-    
-    
-    return
-
-
-def fp_iteration(G, f, x_0, A, b, tol, rtol):
+def fp_iteration(G, f, x_0, A, b, tol, rtol, max_iter):
 
     x = np.copy(x_0)
     x_k = x
@@ -113,6 +126,8 @@ def fp_iteration(G, f, x_0, A, b, tol, rtol):
     i = 0
     while r > tol and r / r0 > rtol:
         i += 1
+        if i > max_iter:
+            raise Exception("Failed to converge within bounds.")
 
         x_k = x
         x = G @ x_k + f
@@ -153,13 +168,13 @@ def onedtest(n):
     w = 1.95
     print(f'w = {w}')
     start = timer()
-    x_sor, i_sor = succesive_over_relaxation_sparse(A_s, b, np.ones(n), w)
+    x_sor, i_sor = successive_over_relaxation_sparse(A_s, b, np.ones(n), w)
     end = timer()
     #print('SOR ', i_sor, f'{(end - start)*1e0:.2f} s', np.linalg.norm(x - x_sor))
     print('SOR ', i_sor, f'{(end - start)*1e0:.2f} s', np.linalg.norm(A_s @ x_sor - b))
 
     '''
-    its = [succesive_over_relaxation_sparse(A_s, b, np.ones(n), w)[1] for w in np.linspace(1.8,2.0,10)]
+    its = [successive_over_relaxation_sparse(A_s, b, np.ones(n), w)[1] for w in np.linspace(1.8,2.0,10)]
     
     plt.plot(np.linspace(1.8,2.0,10), its)
     plt.show()
@@ -211,7 +226,7 @@ def main():
     print(w)
     print(f'w = {w}')
     start = timer()
-    x_sor, i_sor, r_sor = succesive_over_relaxation_sparse(L, b, x_0, w)
+    x_sor, i_sor, r_sor = successive_over_relaxation_sparse(L, b, x_0, w)
     end = timer()
     print('SOR ', i_sor, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_sor - b))
     
