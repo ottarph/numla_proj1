@@ -18,9 +18,16 @@ def main():
     TOL = 1e-7
     RTOL = TOL
 
+    L = build_L_sparse(n)
+    
+    w = 1.57
+    print(f'Jacobi spectral radius = {jacobi_spectral_radius(L.todense())}')
+    print(f'Gauss-Seidel spectral radius = {f_gauss_seidel_spectral_radius(L.todense())}')
+    print(f'SOR spectral radius = {successive_over_relaxation_spectral_radius(L.todense(), w)}')
+
     h = 1 / (n + 1)
 
-    L = build_L_sparse(n)
+    #L = build_L_sparse(n)
 
     b = np.ones(n**2) * h**2
     x_0 = np.ones(n**2)
@@ -93,6 +100,15 @@ def main():
     plt.xlim(np.amin(ww), np.amax(ww))
     plt.xlabel('$\omega$')
     plt.ylabel('Iterations')
+
+    '''
+    L = build_L_sparse(n).todense()
+    #print(L.todense())
+    w = 1.57
+    print(f'Jacobi spectral radius = {jacobi_spectral_radius(L)}')
+    print(f'Gauss-Seidel spectral radius = {f_gauss_seidel_spectral_radius(L)}')
+    print(f'SOR spectral radius = {successive_over_relaxation_spectral_radius(L, w)}')
+    '''
     
     plt.show()
 
