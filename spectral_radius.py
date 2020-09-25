@@ -3,7 +3,7 @@ import scipy as sp
 from scipy.sparse import identity, dok_matrix
 from scipy.sparse.linalg import spsolve
 from scipy.sparse.linalg import factorized
-from timeit import default_timer as timer
+from time import time
 import matplotlib.pyplot as plt
 
 from sparseitermethods import *

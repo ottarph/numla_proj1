@@ -3,23 +3,21 @@ import scipy as sp
 from scipy.sparse import identity, dok_matrix
 from scipy.sparse.linalg import spsolve
 from scipy.sparse.linalg import factorized
-from timeit import default_timer as timer
+from time import time
 import matplotlib.pyplot as plt
 
 from matrix_builders import *
 
-def jacobi_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7, max_iter=1000, Laplace=False):
+def jacobi_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7, max_iter=1000, invprint=False):
 
     A_1 = sp.sparse.diags(A.diagonal())
     A_2 = A_1 - A
 
-    start = timer()
-    if Laplace:
-        A_1_inv = sp.sparse.diags(1 / A.diagonal())
-    else:
-        A_1_inv = sp.sparse.linalg.inv(A_1.tocsc())
-    end = timer()
-    print(f'{(end-start)*1e3:.2f}ms inversion')
+    start = time()
+    A_1_inv = sp.sparse.diags(1 / A.diagonal())
+    end = time()
+    if invprint:
+        print(f'{(end-start)*1e3:.2f}ms inversion')
 
     G = A_1_inv @ A_2
     f = A_1_inv @ b
@@ -27,30 +25,32 @@ def jacobi_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7, max_iter=1000, Laplace=Fals
     return fp_iteration(G, f, x_0, A, b, tol, rtol, max_iter)
 
 
-def f_gauss_seidel_sparse_fp(A, b, x_0, tol=1e-7, rtol=1e-7, max_iter=1000):
+def f_gauss_seidel_sparse_fp(A, b, x_0, tol=1e-7, rtol=1e-7, max_iter=1000, invprint=False):
 
     A_1 = sp.sparse.tril(A)
     A_2 = A_1 - A
 
-    start = timer()
+    start = time()
     A_1_inv = sp.sparse.linalg.inv(A_1.tocsc()).todok()
-    end = timer()
-    print(f'{(end-start)*1e3:.2f}ms inversion')
+    end = time()
+    if invprint:
+        print(f'{(end-start)*1e3:.2f}ms inversion')
 
     G = A_1_inv @ A_2
     f = A_1_inv @ b
 
     return fp_iteration(G, f, x_0, A, b, tol, rtol, max_iter)
 
-def successive_over_relaxation_sparse(A, b, x_0, w=1.1, tol=1e-7, rtol=1e-7, max_iter=1000):
+def successive_over_relaxation_sparse(A, b, x_0, w=1.1, tol=1e-7, rtol=1e-7, max_iter=1000, invprint=False):
 
     A_1 = sp.sparse.diags(A.diagonal()) + w * sp.sparse.tril(A, k=-1)
     A_2 = A_1 - A
 
-    start = timer()
+    start = time()
     A_1_inv = sp.sparse.linalg.inv(A_1.tocsc())
-    end = timer()
-    print(f'{(end-start)*1e3:.2f}ms inversion')
+    end = time()
+    if invprint:
+        print(f'{(end-start)*1e3:.2f}ms inversion')
 
     G = A_1_inv @ A_2
     f = A_1_inv @ b
@@ -58,7 +58,7 @@ def successive_over_relaxation_sparse(A, b, x_0, w=1.1, tol=1e-7, rtol=1e-7, max
     return fp_iteration(G, f, x_0, A, b, tol, rtol, max_iter)
 
 
-def max_eigenvalue_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7, max_iter=1000, Laplace=False):
+def max_eigenvalue_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7, max_iter=1000, Laplace=False, invprint=False):
 
     if Laplace:
         n = int(np.sqrt(x_0.shape[0]))
@@ -81,11 +81,12 @@ def max_eigenvalue_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7, max_iter=1000, Lapl
         A_1 = sp.sparse.csc_matrix(A_1)
         A_2 = A_1 - A
 
-        start = timer()
+        start = time()
         A_1_inv = -0.25 * ( np.eye(n**2) + s / (4 - s) * np.outer(v,v) )
         A_1_inv = sp.sparse.csc_matrix(A_1_inv)
-        end = timer()
-        print(f'{(end-start)*1e3:.2f}ms inversion')
+        end = time()
+        if invprint:
+            print(f'{(end-start)*1e3:.2f}ms inversion')
 
     else:
         
@@ -103,11 +104,12 @@ def max_eigenvalue_fp_sparse(A, b, x_0, tol=1e-7, rtol=1e-7, max_iter=1000, Lapl
         A_1 = sp.sparse.csc_matrix(A_1)
         A_2 = A_1 - A
 
-        start = timer()
+        start = time()
         A_1_inv = sp.sparse.linalg.inv(A_1)
         A_1_inv = sp.sparse.csc_matrix(A_1_inv)
-        end = timer()
-        print(f'{(end-start)*1e3:.2f}ms inversion')
+        end = time()
+        if invprint:
+            print(f'{(end-start)*1e3:.2f}ms inversion')
 
     G = A_1_inv @ A_2
     f = A_1_inv @ b
@@ -151,26 +153,26 @@ def onedtest(n):
     A_s = dok_matrix(A)
 
     #'''
-    start = timer()
+    start = time()
     x_jac, i_jac = jacobi_fp_sparse(A_s, b, np.ones(n))
-    end = timer()
+    end = time()
     #print('Jac ', i_jac, f'{(end - start)*1e0:.2f} s', np.linalg.norm(x - x_jac))
     print('Jac ', i_jac, f'{(end - start)*1e0:.2f} s', np.linalg.norm(A_s @ x_jac - b))
     #'''
 
     #'''
-    start = timer()
+    start = time()
     x_gs, i_gs = f_gauss_seidel_sparse_fp(A_s, b, np.ones(n))
-    end = timer()
+    end = time()
     #print('GS ', i_gs, f'{(end - start)*1e0:.2f} s', np.linalg.norm(x - x_gs))
     print('GS ', i_gs, f'{(end - start)*1e0:.2f} s', np.linalg.norm(A_s @ x_gs - b))
     #'''
 
     w = 1.95
     print(f'w = {w}')
-    start = timer()
+    start = time()
     x_sor, i_sor = successive_over_relaxation_sparse(A_s, b, np.ones(n), w)
-    end = timer()
+    end = time()
     #print('SOR ', i_sor, f'{(end - start)*1e0:.2f} s', np.linalg.norm(x - x_sor))
     print('SOR ', i_sor, f'{(end - start)*1e0:.2f} s', np.linalg.norm(A_s @ x_sor - b))
 
@@ -201,9 +203,9 @@ def main():
     x_0 = np.ones(n**2)
 
     #'''
-    start = timer()
+    start = time()
     x_jac, i_jac, r_jac = jacobi_fp_sparse(L, b, x_0)
-    end = timer()
+    end = time()
     print('Jac ', i_jac, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_jac - b))
 
     plt.semilogy(list(range(len(r_jac))), r_jac, 'r-', label='JAC')
@@ -211,9 +213,9 @@ def main():
     #'''
 
     #'''
-    start = timer()
+    start = time()
     x_gs, i_gs, r_gs = f_gauss_seidel_sparse_fp(L, b, x_0)
-    end = timer()
+    end = time()
     print('GS ', i_gs, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_gs - b))
 
     plt.semilogy(list(range(len(r_gs))), r_gs, 'b-', label='GS')
@@ -226,9 +228,9 @@ def main():
     w = 2 / (1 + np.sin(np.pi / (n+1)))
     print(w)
     print(f'w = {w}')
-    start = timer()
+    start = time()
     x_sor, i_sor, r_sor = successive_over_relaxation_sparse(L, b, x_0, w)
-    end = timer()
+    end = time()
     print('SOR ', i_sor, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_sor - b))
     
     plt.semilogy(list(range(len(r_sor))), r_sor, 'k-', label=rf'SOR, $\omega = {w}$')

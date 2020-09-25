@@ -1,6 +1,6 @@
 import numpy as np
 import scipy as sp
-from timeit import default_timer as timer
+from time import time
 import matplotlib.pyplot as plt
 import matplotlib
 
@@ -15,7 +15,8 @@ def main():
     n = 10
     print(f'n = {n}, n^2 = {n**2}')
 
-    RTOL = 1e-7
+    TOL = 1e-7
+    RTOL = TOL
 
     h = 1 / (n + 1)
 
@@ -25,32 +26,33 @@ def main():
     x_0 = np.ones(n**2)
 
     #'''
-    start = timer()
-    x_jac, i_jac, r_jac = jacobi_fp_sparse(L, b, x_0, rtol=RTOL, Laplace=True)
-    end = timer()
+    start = time()
+    x_jac, i_jac, r_jac = jacobi_fp_sparse(L, b, x_0, tol=TOL, rtol=RTOL)
+    end = time()
     T_jac = end - start
-    #print('Jac ', i_jac, f'{T_jac*1e0:.2f} s', np.linalg.norm(L @ x_jac - b))
+    print('Jac ', i_jac, f'{T_jac*1e3:.2f} ms', np.linalg.norm(L @ x_jac - b))
 
     #'''
 
     #'''
-    start = timer()
-    x_gs, i_gs, r_gs = f_gauss_seidel_sparse_fp(L, b, x_0, rtol=RTOL)
-    end = timer()
+    start = time()
+    x_gs, i_gs, r_gs = f_gauss_seidel_sparse_fp(L, b, x_0, tol=TOL, rtol=RTOL)
+    end = time()
     T_gs = end - start
-    #print('GS ', i_gs, f'{T_gs*1e0:.2f} s', np.linalg.norm(L @ x_gs - b))
+    print('GS ', i_gs, f'{T_gs*1e3:.2f} ms', np.linalg.norm(L @ x_gs - b))
 
     #'''
-
     w = 1.5
-    #w = 1.561
-    #w = 2 / (1 + np.sin(np.pi / (n+1)))
-    #print(f'w = {w}')
-    start = timer()
-    x_sor, i_sor, r_sor = successive_over_relaxation_sparse(L, b, x_0, w, rtol=RTOL)
-    end = timer()
+    start = time()
+    x_sor, i_sor, r_sor = successive_over_relaxation_sparse(L, b, x_0, w, tol=TOL, rtol=RTOL)
+    end = time()
     T_sor = end - start
-    #print('SOR ', i_sor, f'{T_sor*1e0:.2f} s', np.linalg.norm(L @ x_sor - b), w)
+    print('SOR ', i_sor, f'{T_sor*1e3:.2f} ms', np.linalg.norm(L @ x_sor - b), w)
+
+    iterations = np.array([i_jac, i_gs, i_sor])
+    times = np.array([T_jac, T_gs, T_sor])
+
+    print(times / iterations * 1000, 'ms')
     
 
     plt.figure()
@@ -63,19 +65,34 @@ def main():
     plt.legend()
     plt.xlabel('Iterations')
     plt.ylabel('Relative residuals')
-    plt.xlim(0, max(i_sor, i_gs, i_jac))
+    plt.xlim(0, np.amax(iterations))
     
     plt.figure()
 
     pos = [0.25, 0.5, 0.75]
-    times = np.array([T_jac, T_gs, T_sor])
 
-    plt.bar(pos, times * 1000, width=0.15, color='black', alpha=0.5, linewidth=0.2, edgecolor='black')
-    #plt.xticks(pos, [r'$T_{jac}$', r'$T_{gs}$', r'$T_{sor}$'])
-    plt.xticks(pos, ['Jacobi', 'Gauss-Seidel', 'SOR'])
+    plt.bar(pos, times * 1000, width=0.1, color='black', alpha=0.6, linewidth=1, edgecolor='black')
+    plt.xticks(pos, ['Jacobi', 'Gauss-Seidel', rf'SOR, $\omega = {w}$'])
     plt.ylabel('Running time / ms')
 
+    plt.figure()
 
+    ww = np.linspace(1.0, 1.5, 11)
+    ww = np.append(ww, np.linspace(1.5 + (1.6-1.5)/10, 1.6, 10))
+    ww = np.append(ww, np.linspace(1.6 + (2.0-1.6)/8, 2.0, 8))
+    
+    iters = np.zeros_like(ww)
+    for i, w in enumerate(ww):
+        _, it, _ = successive_over_relaxation_sparse(L, b, x_0, w, tol=TOL, rtol=RTOL)
+        iters[i] = it
+
+    plt.plot(ww, iters, 'k.-', linewidth=0.7)
+    plt.axhline(np.amin(iters), linewidth=0.5, linestyle='dashed', color='black')
+    print(f'w_min = {ww[np.argmin(iters)]}, iters_min = {np.amin(iters)}')
+
+    plt.xlim(np.amin(ww), np.amax(ww))
+    plt.xlabel('$\omega$')
+    plt.ylabel('Iterations')
     
     plt.show()
 
