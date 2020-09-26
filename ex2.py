@@ -80,10 +80,18 @@ def main():
     plt.xlim(0, max(i_me, i_jac, i_meHB, i_jacHB))
 
 
-    L = random_spd(n**2, seed=1)
+    plt.figure()
 
-    h = 0.5
-    l = 0.3
+    #L = sp.sparse.csc_matrix(random_spd(n**2, seed=1, rho=0.1))
+    n = 3
+    L = random_test_matrix(n, seed=3, off_diagonal=False)
+    print(L.todense().round(2))
+    dx = 1 / (n + 1)
+    b = np.ones(n**2) * dx**2
+    x_0 = np.ones(n**2)
+
+    h = 0.7
+    l = 0.7
     #''' Jacobi with Polyak Heavy ball
     start = time()
     x_jacHB, i_jacHB, r_jacHB = jacobi_heavy_ball_sparse(L, b, x_0, h, l, tol=TOL, rtol=RTOL)
@@ -93,7 +101,7 @@ def main():
     #'''
     #''' Jacobi without
     start = time()
-    x_jac, i_jac, r_jac = jacobi_fp_sparse(L, b, x_0, tol=TOL, rtol=RTOL)
+    x_jac, i_jac, r_jac = jacobi_fp_sparse(L, b, x_0, tol=TOL, rtol=RTOL, max_iter=10000)
     end = time()
     print('Jac ', i_jac, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_jac - b))
     plt.semilogy(list(range(len(r_jac))), r_jac/r_jac[0], 'k--', label='Jacobi')

@@ -86,14 +86,14 @@ def random_orthogonal(n, seed=False):
     return Q
     
 
-def random_spd(n, seed=False):
+def random_spd(n, seed=False, l_min=0, l_max=1):
     '''
         Returns a random symmetric positive-definite matrix.
     '''
     if seed:
         np.random.seed(seed)
     
-    eigvals = np.random.random(n)
+    eigvals = np.random.random(n) * (l_max - l_min) + l_min
     assert np.all(eigvals > 0)
     L = np.diag(eigvals)
 
@@ -102,7 +102,7 @@ def random_spd(n, seed=False):
     return Q @ L @ Q.T
 
     
-def random_test_matrix(n, seed=False):
+def random_test_matrix(n, seed=False, off_diagonal=True, l_min=0, l_max=1):
     '''
         Though stated to in the project description, this method does not produce a positive,
         or negative, definite matrix.
@@ -110,16 +110,20 @@ def random_test_matrix(n, seed=False):
     if seed:
         np.random.seed(seed)
 
-    B = random_spd(n)
+    B = random_spd(n, l_min=l_min, l_max=l_max)
     I = np.eye(n)
 
     L = sp.sparse.dok_matrix((n**2,n**2))
 
     L[:n,:n] = B
-    for i in range(1, n):
-        L[(i-1)*n:i*n, i*n:(i+1)*n] = I
-        L[i*n:(i+1)*n, i*n:(i+1)*n] = B
-        L[i*n:(i+1)*n, (i-1)*n:i*n] = I
+    if off_diagonal:
+        for i in range(1, n):
+            L[(i-1)*n:i*n, i*n:(i+1)*n] = -I
+            L[i*n:(i+1)*n, i*n:(i+1)*n] = B
+            L[i*n:(i+1)*n, (i-1)*n:i*n] = -I
+    else:
+        for i in range(1, n):
+            L[i*n:(i+1)*n, i*n:(i+1)*n] = B
 
     return L
 
@@ -156,7 +160,7 @@ def main():
     plt.semilogy(list(range(len(r_jacHB))), r_jacHB/r_jacHB[0], 'r-', label=rf'JacHB, rel, $h = {h}, \lambda = {l}$')
     #'''
 
-    #''' Jacobi without
+    ''' Jacobi without
     start = time()
     x_jac, i_jac, r_jac = jacobi_fp_sparse(L, b, x_0, tol=TOL, rtol=RTOL)
     end = time()
@@ -235,6 +239,29 @@ def main():
     '''
 
     
+    n = 10
+    dx = 1 / (n + 1)
+    b = np.ones(n**2) * dx**2
+    x_0 = np.ones(n**2)
+
+    #L = random_test_matrix(n, off_diagonal=False)
+    #print(L.todense().round(3))
+    #print(np.linalg.eigvals(L.todense()))
+
+    #L = random_spd(n, seed=1, l_min=0.2, l_max=0.8)
+    #print(L)
+    #print(np.linalg.eigvals(L))
+
+    #L = random_test_matrix(n, off_diagonal=False, l_min=0.2, l_max=0.8).todense()
+    #print(L.round(2))
+    #print(np.linalg.eigvals(L))
+    L = random_test_matrix(n, off_diagonal=False, l_min=0.2, l_max=0.8)
+
+    x_jac, i_jac, r_jac = jacobi_fp_sparse(L, b, x_0, tol=TOL, rtol=RTOL)
+    plt.semilogy(list(range(len(r_jac))), r_jac/r_jac[0], 'k:', label='Jac, rel')
+
+
+
 
     plt.axhline(y=RTOL, color='black', linestyle='dashed', linewidth=0.7)
     plt.legend()
