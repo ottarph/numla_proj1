@@ -10,6 +10,18 @@ from spectral_radius import *
 from matrix_builders import *
 
 
+def beta(x, y):
+    '''
+        Estimator for the coefficient of beta in linear regression model
+            y = alpha + beta * x
+    '''
+    n = x.shape[0]
+    
+    beta = np.sum( (x - np.mean(x)) * (y - np.mean(y))) / np.sum( (x - np.mean(x))**2 )
+
+    return beta
+
+
 def main():
 
     n = 10
@@ -21,9 +33,14 @@ def main():
     L = build_L_sparse(n)
     
     w = 1.57
-    print(f'Jacobi spectral radius = {jacobi_spectral_radius(L.todense())}')
-    print(f'Gauss-Seidel spectral radius = {f_gauss_seidel_spectral_radius(L.todense())}')
-    print(f'SOR spectral radius = {successive_over_relaxation_spectral_radius(L.todense(), w)}')
+
+    rho_jac = jacobi_spectral_radius(L.todense())
+    rho_gs = f_gauss_seidel_spectral_radius(L.todense())
+    rho_sor = successive_over_relaxation_spectral_radius(L.todense(), w)
+
+    print(f'Jacobi spectral radius = {rho_jac}')
+    print(f'Gauss-Seidel spectral radius = {rho_gs}')
+    print(f'SOR spectral radius = {rho_sor}')
 
     h = 1 / (n + 1)
 
@@ -101,14 +118,22 @@ def main():
     plt.xlabel('$\omega$')
     plt.ylabel('Iterations')
 
-    '''
-    L = build_L_sparse(n).todense()
-    #print(L.todense())
+
+
+    i_jac  = np.arange(1, r_jac.shape[0] + 1, dtype=float)
+    i_gs = np.arange(1, r_gs.shape[0] + 1, dtype=float)
     w = 1.57
-    print(f'Jacobi spectral radius = {jacobi_spectral_radius(L)}')
-    print(f'Gauss-Seidel spectral radius = {f_gauss_seidel_spectral_radius(L)}')
-    print(f'SOR spectral radius = {successive_over_relaxation_spectral_radius(L, w)}')
-    '''
+    _, _, r_sor = successive_over_relaxation_sparse(L, b, x_0, w, tol=TOL, rtol=RTOL)
+    i_sor = np.arange(1, r_sor.shape[0] + 1, dtype=float)
+
+    print(f'Jacobi spectral radius = {rho_jac}')
+    print(f'Gauss-Seidel spectral radius = {rho_gs}')
+    print(f'SOR spectral radius = {rho_sor}')
+
+    print(f'beta_jac = {np.exp(beta(i_jac, np.log(r_jac)))}')
+    print(f'beta_gs = {np.exp(beta(i_gs, np.log(r_gs)))}')
+    print(f'beta_sor (w = {w}) = {np.exp(beta(i_sor, np.log(r_sor)))}')
+
     
     plt.show()
 
