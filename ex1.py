@@ -34,6 +34,9 @@ def main():
     
     w = 1.57
 
+    '''
+        Finding the spectral radius of G for Jacobi, Gauss-Seidel and SOR methods
+    '''
     rho_jac = jacobi_spectral_radius(L.todense())
     rho_gs = f_gauss_seidel_spectral_radius(L.todense())
     rho_sor = successive_over_relaxation_spectral_radius(L.todense(), w)
@@ -48,22 +51,23 @@ def main():
     b = np.ones(n**2) * h**2
     x_0 = np.ones(n**2)
 
+    '''
+        Convergence comparison of Jacobi, Gauss-Seidel and SOR methods, TOL=1e-7
+    '''
+
     #'''
     start = time()
     x_jac, i_jac, r_jac = jacobi_fp_sparse(L, b, x_0, tol=TOL, rtol=RTOL)
     end = time()
     T_jac = end - start
     print('Jac ', i_jac, f'{T_jac*1e3:.2f} ms', np.linalg.norm(L @ x_jac - b))
-
     #'''
-
     #'''
     start = time()
     x_gs, i_gs, r_gs = f_gauss_seidel_sparse_fp(L, b, x_0, tol=TOL, rtol=RTOL)
     end = time()
     T_gs = end - start
     print('GS ', i_gs, f'{T_gs*1e3:.2f} ms', np.linalg.norm(L @ x_gs - b))
-
     #'''
     w = 1.5
     start = time()
@@ -72,12 +76,12 @@ def main():
     T_sor = end - start
     print('SOR ', i_sor, f'{T_sor*1e3:.2f} ms', np.linalg.norm(L @ x_sor - b), w)
 
+    
     iterationsA = np.array([i_jac, i_gs, i_sor])
     timesA = np.array([T_jac, T_gs, T_sor])
 
     print(f'Time per iteration, tolerance {TOL}', timesA / iterationsA * 1000, 'ms')
     
-
     plt.figure()
     
     plt.semilogy(list(range(len(r_jac))), r_jac/r_jac[0], 'k:', label='JAC')
@@ -90,6 +94,10 @@ def main():
     plt.ylabel('Relative residuals')
     plt.xlim(0, np.amax(iterationsA))
 
+
+    '''
+        Convergence comparison of Jacobi, Gauss-Seidel and SOR methods, TOL=1e-7
+    '''
 
     TOL = 1e-14
     RTOL = TOL
@@ -134,6 +142,10 @@ def main():
     plt.legend()
 
 
+    '''
+        Finding optimal omega-value for SOR
+    '''
+
     TOL = 1e-7
     RTOL = TOL
     ww = np.linspace(1.0, 1.5, 11)
@@ -155,11 +167,14 @@ def main():
     plt.xlabel('$\omega$')
     plt.ylabel('Iterations')
 
+
+    '''
+        Numerical experiment for convergence results
+    '''
+
     TOL = 1e-7
     RTOL = TOL
 
-    #i_jac  = np.arange(1, r_jac.shape[0] + 1, dtype=float)
-    #i_gs = np.arange(1, r_gs.shape[0] + 1, dtype=float)
     _, _, r_jac = jacobi_fp_sparse(L, b, x_0, tol=TOL, rtol=RTOL)
     i_jac = np.arange(1, r_jac.shape[0] + 1, dtype=float)
     _, _, r_gs = f_gauss_seidel_sparse_fp(L, b, x_0, tol=TOL, rtol=RTOL)

@@ -14,6 +14,9 @@ from matrix_builders import *
 
 
 def main():
+    '''
+        Test using random, sparse, symmetric, positive-definite matrices
+    '''
 
     n = 10
 
@@ -29,9 +32,6 @@ def main():
     x_0 = np.ones(n**2)
     
     fig, axs = plt.subplots(2, len(seeds) // 2)
-
-    jac_radii = np.zeros_like(seeds)
-    max_eig_radii = np.zeros_like(seeds)
 
     matplotlib.rcParams.update({'font.size': 16})
 
@@ -86,10 +86,6 @@ def main():
 
     axs.flatten()[1].legend()
 
-    print(f'jac_radii = {jac_radii}')
-    print(f'max_eig_radii = {max_eig_radii}')
-
-    
 
     plt.show()
 

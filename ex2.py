@@ -14,6 +14,10 @@ from matrix_builders import *
 
 
 def main():
+    '''
+        Convergence comparisons for accelerated and un-accelerated
+        Jacobi and maximum eigenvalue methods
+    '''
 
     n = 10
 

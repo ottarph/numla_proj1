@@ -15,6 +15,10 @@ from matrix_builders import *
 
 def main():
 
+    '''
+        Finding approximate values for optimal h and lambda in Jacobi heavy ball method
+    '''
+
 
     n = 10
 
