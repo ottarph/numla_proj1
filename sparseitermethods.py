@@ -188,61 +188,8 @@ def onedtest(n):
 
 
 
-    
 
 def main():
-
-    n = 10
-    print(f'n = {n}, n^2 = {n**2}')
-
-    h = 1 / (n + 1)
-
-    L = build_L_sparse(n)
-
-    b = np.ones(n**2) * h**2
-    x_0 = np.ones(n**2)
-
-    #'''
-    start = time()
-    x_jac, i_jac, r_jac = jacobi_fp_sparse(L, b, x_0)
-    end = time()
-    print('Jac ', i_jac, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_jac - b))
-
-    plt.semilogy(list(range(len(r_jac))), r_jac, 'r-', label='JAC')
-    plt.semilogy(list(range(len(r_jac))), r_jac/r_jac[0], 'r--', label='JAC, rel')
-    #'''
-
-    #'''
-    start = time()
-    x_gs, i_gs, r_gs = f_gauss_seidel_sparse_fp(L, b, x_0)
-    end = time()
-    print('GS ', i_gs, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_gs - b))
-
-    plt.semilogy(list(range(len(r_gs))), r_gs, 'b-', label='GS')
-    plt.semilogy(list(range(len(r_gs))), r_gs/r_gs[0], 'b--', label='GS, rel')
-
-    #'''
-
-    w = 1.5
-    w = 1.561
-    w = 2 / (1 + np.sin(np.pi / (n+1)))
-    print(w)
-    print(f'w = {w}')
-    start = time()
-    x_sor, i_sor, r_sor = successive_over_relaxation_sparse(L, b, x_0, w)
-    end = time()
-    print('SOR ', i_sor, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_sor - b))
-    
-    plt.semilogy(list(range(len(r_sor))), r_sor, 'k-', label=rf'SOR, $\omega = {w}$')
-    plt.semilogy(list(range(len(r_sor))), r_sor/r_sor[0], 'k--', label='SOR, rel')
-    
-    plt.axhline(y=1e-7, color='black', linestyle='dashed', linewidth=0.7)
-    plt.legend()
-    plt.title('Residuals')
-    plt.xlabel('Iterations')
-    plt.xlim(0, max(i_sor, i_gs, i_jac))
-    plt.show()
-
 
 
     return
