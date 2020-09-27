@@ -60,6 +60,60 @@ def successive_over_relaxation_spectral_radius(A, w):
 
     return np.max(np.abs(ss))
 
+def maximum_eigenvalue_spectral_radius(A, Laplace=False):
+    '''
+        Finds the spectral radius of G for the successive over relaxation method.
+    '''
+
+    if Laplace:
+        n = int(np.sqrt(x_0.shape[0]))
+
+        rr = np.arange(1, n+1)
+        v1 = np.sin(np.pi / (n + 1) * rr)
+
+        V = np.outer(v1, v1)
+
+        v = V.flatten()
+        v = v / np.linalg.norm(v)
+
+        A_d = np.diag(A.diagonal())
+
+        u = (A - A_d) @ v
+
+        s = 4 * np.cos(np.pi / (n+1))
+
+        A_1 = A_d + s * np.outer(v,v)
+        #A_1 = sp.sparse.csc_matrix(A_1)
+        A_2 = A_1 - A
+
+        A_1_inv = -0.25 * ( np.eye(n**2) + s / (4 - s) * np.outer(v,v) )
+        #A_1_inv = sp.sparse.csc_matrix(A_1_inv)
+
+    else:
+        
+        A_d = np.diag(np.diag(A))
+        Amd = A - A_d
+
+        S, V = np.linalg.eig(Amd)
+        
+
+        ind = np.argmax(S)
+
+        s, v = S[ind], V[:,ind]
+
+        A_1 = A_d + s * np.outer(v,v)
+
+        A_2 = A_1 - A
+
+        A_1_inv = np.linalg.inv(A_1)
+
+
+    G = A_1_inv @ A_2
+    
+    ss = np.linalg.eigvals(G)
+
+    return np.max(np.abs(ss))
+
 
 
 def main():

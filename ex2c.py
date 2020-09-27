@@ -22,24 +22,25 @@ def main():
 
     seeds = [1, 2, 4, 20]
 
-    l_min, l_max = 0.01, 0.99
+    l_min, l_max = 0.00, 0.99
 
     dx = 1 / (n + 1)
     b = np.ones(n**2) * dx**2
     x_0 = np.ones(n**2)
+    
+    fig, axs = plt.subplots(2, len(seeds) // 2)
 
-    h = 4 / (np.sqrt(l_max) + np.sqrt(l_min))**2
-    l = (np.sqrt(l_max) - np.sqrt(l_min)) / (np.sqrt(l_max) + np.sqrt(l_min))
+    jac_radii = np.zeros_like(seeds)
+    max_eig_radii = np.zeros_like(seeds)
 
-    for seed in seeds:
+    matplotlib.rcParams.update({'font.size': 16})
+
+    for i, seed in enumerate(seeds):
         print(seed)
         L = random_test_matrix(n, seed=seed, off_diagonal=False, l_min=0.01, l_max=0.99)
-        #L_0 = np.copy(L.todense())
-        plt.figure()
- 
 
-        h = 0.7
-        l = 0.7
+        h = 1.24
+        l = 0.34
 
         #''' Jacobi with Polyak Heavy ball
         start = time()
@@ -48,7 +49,7 @@ def main():
         end = time()
         print('JacHB ', i_jacHB, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_jacHB - b))
 
-        plt.semilogy(list(range(len(r_jacHB))), r_jacHB/r_jacHB[0], 'k-', label=rf'Jacobi, $h = {h}, \lambda = {l}$')
+        axs.flatten()[i].semilogy(list(range(len(r_jacHB))), r_jacHB/r_jacHB[0], 'k-', label=rf'Jacobi, $h = {h}, \lambda = {l}$')
         #'''
 
         #''' Jacobi without
@@ -57,7 +58,7 @@ def main():
         end = time()
         print('Jac ', i_jac, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_jac - b))
 
-        plt.semilogy(list(range(len(r_jac))), r_jac/r_jac[0], 'k--', label='Jacobi')
+        axs.flatten()[i].semilogy(list(range(len(r_jac))), r_jac/r_jac[0], 'k--', label='Jacobi')
         #'''
 
         h = 0.9
@@ -69,7 +70,7 @@ def main():
         end = time()
         print('MeHB ', i_meHB, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_meHB - b))
 
-        plt.semilogy(list(range(len(r_meHB))), r_meHB/r_meHB[0], 'k-.', label=rf'Max-eigenvalue, $h = {h}, \lambda = {l}$')
+        axs.flatten()[i].semilogy(list(range(len(r_meHB))), r_meHB/r_meHB[0], 'k-.', label=rf'Max-eigenvalue, $h = {h}, \lambda = {l}$')
         #'''
 
         #''' Max eigenvalue without
@@ -78,15 +79,18 @@ def main():
         end = time()
         print('Me ', i_me, f'{(end - start)*1e0:.2f} s', np.linalg.norm(L @ x_me - b))
 
-        plt.semilogy(list(range(len(r_me))), r_me/r_me[0], 'k:', label=rf'Max-eigenvalue')
+        axs.flatten()[i].semilogy(list(range(len(r_me))), r_me/r_me[0], 'k:', label=rf'Max-eigenvalue')
         #'''
 
-        plt.title(f'seed $ = {seed} $')
-        plt.legend()
+        axs.flatten()[i].axhline(y=RTOL, color='black', linestyle='dashed', linewidth=0.7)
 
-    #print(L.todense() - L_0)
+    axs.flatten()[1].legend()
+
+    print(f'jac_radii = {jac_radii}')
+    print(f'max_eig_radii = {max_eig_radii}')
 
     
+
     plt.show()
 
     return

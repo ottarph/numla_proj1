@@ -69,19 +69,20 @@ def main():
 
     
     iterations = np.where(iterations != 0, iterations, np.ones_like(iterations) * 400)
+    
+    i,j = np.unravel_index(np.argmin(iterations, axis=None), iterations.shape)
 
-    print(f'l_min = {l_min}, h_min = {h_min}')
+    print(f'l_min = {l_min}, h_min = {h_min}, it_min = {it_min}')
 
     lll, hhh = np.meshgrid(ll, hh)
-    
     
 
     fig = plt.figure(figsize=(8, 6), dpi=100)
     ax = fig.gca(projection='3d')
-    surf = ax.plot_surface(lll, hhh, iterations, rstride=1, cstride=1, cmap=cm.viridis)
+    surf = ax.plot_surface(lll, hhh, iterations, rstride=1, cstride=1, cmap=cm.Greys)   
     plt.xlabel("$l$")
     plt.ylabel("$h$")
-
+    ax.set_zlabel('Iterations')
 
     plt.show()
 
